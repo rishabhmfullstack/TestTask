@@ -89,3 +89,44 @@ curl -O http://localhost:8080/API/download/{job-id}
 - `csv_processor.go` - CSV processing logic
 - `email_validator.go` - Email validation utilities
 - `uploads/` - Directory for storing uploaded and processed files
+
+## Testing
+
+The project includes comprehensive unit tests with 80% code coverage:
+
+### Test Files
+
+- `email_validator_test.go` - Tests for email validation functionality
+- `csv_processor_test.go` - Tests for CSV processing logic
+- `models_test.go` - Tests for data models and job store
+- `handlers_test.go` - Tests for HTTP request handlers
+- `main_test.go` - Integration tests for the complete application
+
+### Running Tests
+
+```bash
+# Run all tests
+go test -v
+
+# Run tests with coverage
+go test -v -cover
+
+# Run the test script (includes coverage report generation)
+./run_tests.sh
+```
+
+### Test Coverage
+
+The test suite covers:
+
+- ✅ Email validation with various valid and invalid formats
+- ✅ CSV processing with different file structures
+- ✅ Job management and status tracking
+- ✅ HTTP request/response handling
+- ✅ File upload and download functionality
+- ✅ Error handling and edge cases
+- ✅ Concurrent operations and thread safety
+- ✅ Integration testing of complete workflows
+
+**Current Coverage: 80.0%**
+fo
