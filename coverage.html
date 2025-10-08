@@ -1,0 +1,546 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+		<title>csv-processor: Go Coverage Report</title>
+		<style>
+			body {
+				background: black;
+				color: rgb(80, 80, 80);
+			}
+			body, pre, #legend span {
+				font-family: Menlo, monospace;
+				font-weight: bold;
+			}
+			#topbar {
+				background: black;
+				position: fixed;
+				top: 0; left: 0; right: 0;
+				height: 42px;
+				border-bottom: 1px solid rgb(80, 80, 80);
+			}
+			#content {
+				margin-top: 50px;
+			}
+			#nav, #legend {
+				float: left;
+				margin-left: 10px;
+			}
+			#legend {
+				margin-top: 12px;
+			}
+			#nav {
+				margin-top: 10px;
+			}
+			#legend span {
+				margin: 0 5px;
+			}
+			.cov0 { color: rgb(192, 0, 0) }
+.cov1 { color: rgb(128, 128, 128) }
+.cov2 { color: rgb(116, 140, 131) }
+.cov3 { color: rgb(104, 152, 134) }
+.cov4 { color: rgb(92, 164, 137) }
+.cov5 { color: rgb(80, 176, 140) }
+.cov6 { color: rgb(68, 188, 143) }
+.cov7 { color: rgb(56, 200, 146) }
+.cov8 { color: rgb(44, 212, 149) }
+.cov9 { color: rgb(32, 224, 152) }
+.cov10 { color: rgb(20, 236, 155) }
+
+		</style>
+	</head>
+	<body>
+		<div id="topbar">
+			<div id="nav">
+				<select id="files">
+				
+				<option value="file0">csv-processor/csv_processor.go (83.8%)</option>
+				
+				<option value="file1">csv-processor/email_validator.go (100.0%)</option>
+				
+				<option value="file2">csv-processor/handlers.go (87.5%)</option>
+				
+				<option value="file3">csv-processor/main.go (0.0%)</option>
+				
+				<option value="file4">csv-processor/models.go (100.0%)</option>
+				
+				</select>
+			</div>
+			<div id="legend">
+				<span>not tracked</span>
+			
+				<span class="cov0">not covered</span>
+				<span class="cov8">covered</span>
+			
+			</div>
+		</div>
+		<div id="content">
+		
+		<pre class="file" id="file0" style="display: none">package main
+
+import (
+        "encoding/csv"
+        "fmt"
+        "io"
+        "os"
+        "path/filepath"
+        "strings"
+)
+
+// CSVProcessor handles CSV file processing
+type CSVProcessor struct {
+        validator *EmailValidator
+}
+
+// NewCSVProcessor creates a new CSV processor
+func NewCSVProcessor() *CSVProcessor <span class="cov8" title="1">{
+        return &amp;CSVProcessor{
+                validator: NewEmailValidator(),
+        }
+}</span>
+
+// ProcessCSV processes a CSV file and adds email validation column
+func (cp *CSVProcessor) ProcessCSV(inputPath, outputPath string) error <span class="cov8" title="1">{
+        // Open input file
+        inputFile, err := os.Open(inputPath)
+        if err != nil </span><span class="cov8" title="1">{
+                return fmt.Errorf("failed to open input file: %w", err)
+        }</span>
+        <span class="cov8" title="1">defer inputFile.Close()
+
+        // Create output file
+        outputFile, err := os.Create(outputPath)
+        if err != nil </span><span class="cov0" title="0">{
+                return fmt.Errorf("failed to create output file: %w", err)
+        }</span>
+        <span class="cov8" title="1">defer outputFile.Close()
+
+        // Create CSV reader and writer
+        reader := csv.NewReader(inputFile)
+        writer := csv.NewWriter(outputFile)
+        defer writer.Flush()
+
+        // Process each row
+        rowNum := 0
+        for </span><span class="cov8" title="1">{
+                record, err := reader.Read()
+                if err == io.EOF </span><span class="cov8" title="1">{
+                        break</span>
+                }
+                <span class="cov8" title="1">if err != nil </span><span class="cov0" title="0">{
+                        return fmt.Errorf("failed to read CSV row %d: %w", rowNum, err)
+                }</span>
+
+                // Skip empty rows
+                <span class="cov8" title="1">if len(record) == 0 || (len(record) == 1 &amp;&amp; strings.TrimSpace(record[0]) == "") </span><span class="cov0" title="0">{
+                        continue</span>
+                }
+
+                // For header row (first row), add "has_email" column
+                <span class="cov8" title="1">if rowNum == 0 </span><span class="cov8" title="1">{
+                        record = append(record, "has_email")
+                }</span> else<span class="cov8" title="1"> {
+                        // For data rows, check if any field contains a valid email
+                        hasEmail := cp.validator.HasValidEmail(record)
+                        record = append(record, fmt.Sprintf("%t", hasEmail))
+                }</span>
+
+                // Write the modified record
+                <span class="cov8" title="1">if err := writer.Write(record); err != nil </span><span class="cov0" title="0">{
+                        return fmt.Errorf("failed to write CSV row %d: %w", rowNum, err)
+                }</span>
+
+                <span class="cov8" title="1">rowNum++</span>
+        }
+
+        <span class="cov8" title="1">return nil</span>
+}
+
+// SaveUploadedFile saves the uploaded file to the filesystem
+func (cp *CSVProcessor) SaveUploadedFile(fileData []byte, filename string) (string, error) <span class="cov8" title="1">{
+        // Create uploads directory if it doesn't exist
+        uploadsDir := "uploads"
+        if err := os.MkdirAll(uploadsDir, 0755); err != nil </span><span class="cov0" title="0">{
+                return "", fmt.Errorf("failed to create uploads directory: %w", err)
+        }</span>
+
+        // Generate file path
+        <span class="cov8" title="1">filePath := filepath.Join(uploadsDir, filename)
+
+        // Write file
+        if err := os.WriteFile(filePath, fileData, 0644); err != nil </span><span class="cov0" title="0">{
+                return "", fmt.Errorf("failed to write uploaded file: %w", err)
+        }</span>
+
+        <span class="cov8" title="1">return filePath, nil</span>
+}
+
+// GetProcessedFilePath returns the path for the processed file
+func (cp *CSVProcessor) GetProcessedFilePath(jobID string) string <span class="cov8" title="1">{
+        return filepath.Join("uploads", fmt.Sprintf("processed_%s.csv", jobID))
+}</span>
+</pre>
+		
+		<pre class="file" id="file1" style="display: none">package main
+
+import (
+        "regexp"
+        "strings"
+)
+
+// EmailValidator handles email validation logic
+type EmailValidator struct {
+        emailRegex *regexp.Regexp
+}
+
+// NewEmailValidator creates a new email validator
+func NewEmailValidator() *EmailValidator <span class="cov8" title="1">{
+        // More strict email regex pattern that allows + and % in local part
+        emailPattern := `^[a-zA-Z0-9]([a-zA-Z0-9._%+-]*[a-zA-Z0-9])?@[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?\.[a-zA-Z]{2,}$`
+        emailRegex := regexp.MustCompile(emailPattern)
+
+        return &amp;EmailValidator{
+                emailRegex: emailRegex,
+        }
+}</span>
+
+// IsValidEmail checks if a string is a valid email address
+func (ev *EmailValidator) IsValidEmail(email string) bool <span class="cov8" title="1">{
+        email = strings.TrimSpace(email)
+        if email == "" </span><span class="cov8" title="1">{
+                return false
+        }</span>
+        <span class="cov8" title="1">return ev.emailRegex.MatchString(email)</span>
+}
+
+// HasValidEmail checks if any field in a row contains a valid email
+func (ev *EmailValidator) HasValidEmail(fields []string) bool <span class="cov8" title="1">{
+        for _, field := range fields </span><span class="cov8" title="1">{
+                if ev.IsValidEmail(field) </span><span class="cov8" title="1">{
+                        return true
+                }</span>
+        }
+        <span class="cov8" title="1">return false</span>
+}
+</pre>
+		
+		<pre class="file" id="file2" style="display: none">package main
+
+import (
+        "encoding/json"
+        "fmt"
+        "io"
+        "net/http"
+        "os"
+        "path/filepath"
+        "strings"
+
+        "github.com/google/uuid"
+        "github.com/gorilla/mux"
+)
+
+// App represents the main application
+type App struct {
+        jobStore     *JobStore
+        csvProcessor *CSVProcessor
+}
+
+// NewApp creates a new application instance
+func NewApp() *App <span class="cov8" title="1">{
+        return &amp;App{
+                jobStore:     NewJobStore(),
+                csvProcessor: NewCSVProcessor(),
+        }
+}</span>
+
+// UploadHandler handles file upload requests
+func (app *App) UploadHandler(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
+        // Set content type
+        w.Header().Set("Content-Type", "application/json")
+
+        // Parse multipart form
+        err := r.ParseMultipartForm(10 &lt;&lt; 20) // 10 MB max file size
+        if err != nil </span><span class="cov8" title="1">{
+                app.sendErrorResponse(w, http.StatusBadRequest, "Failed to parse multipart form")
+                return
+        }</span>
+
+        // Get the file from form data
+        <span class="cov8" title="1">file, handler, err := r.FormFile("file")
+        if err != nil </span><span class="cov8" title="1">{
+                app.sendErrorResponse(w, http.StatusBadRequest, "No file provided")
+                return
+        }</span>
+        <span class="cov8" title="1">defer file.Close()
+
+        // Validate file type
+        contentType := handler.Header.Get("Content-Type")
+        if !strings.Contains(contentType, "text/csv") &amp;&amp; !strings.HasSuffix(strings.ToLower(handler.Filename), ".csv") </span><span class="cov8" title="1">{
+                app.sendErrorResponse(w, http.StatusBadRequest, "File must be a CSV file")
+                return
+        }</span>
+
+        // Read file data
+        <span class="cov8" title="1">fileData, err := io.ReadAll(file)
+        if err != nil </span><span class="cov0" title="0">{
+                app.sendErrorResponse(w, http.StatusInternalServerError, "Failed to read file")
+                return
+        }</span>
+
+        // Generate unique job ID
+        <span class="cov8" title="1">jobID := uuid.New().String()
+
+        // Create job
+        app.jobStore.CreateJob(jobID)
+
+        // Process file asynchronously
+        go app.processFileAsync(jobID, fileData, handler.Filename)
+
+        // Send response with job ID
+        response := UploadResponse{ID: jobID}
+        w.WriteHeader(http.StatusOK)
+        json.NewEncoder(w).Encode(response)</span>
+}
+
+// DownloadHandler handles file download requests
+func (app *App) DownloadHandler(w http.ResponseWriter, r *http.Request) <span class="cov8" title="1">{
+        vars := mux.Vars(r)
+        jobID := vars["id"]
+
+        // Get job from store
+        job, exists := app.jobStore.GetJob(jobID)
+        if !exists </span><span class="cov8" title="1">{
+                app.sendErrorResponse(w, http.StatusBadRequest, "Invalid job ID")
+                return
+        }</span>
+
+        // Check job status
+        <span class="cov8" title="1">switch job.Status </span>{
+        case JobStatusProcessing:<span class="cov8" title="1">
+                w.WriteHeader(http.StatusLocked) // 423
+                return</span>
+        case JobStatusFailed:<span class="cov8" title="1">
+                app.sendErrorResponse(w, http.StatusInternalServerError, job.Error)
+                return</span>
+        case JobStatusCompleted:<span class="cov8" title="1">
+                // Serve the processed file
+                app.serveFile(w, job.FilePath)
+                return</span>
+        default:<span class="cov0" title="0">
+                app.sendErrorResponse(w, http.StatusInternalServerError, "Unknown job status")
+                return</span>
+        }
+}
+
+// processFileAsync processes the uploaded file asynchronously
+func (app *App) processFileAsync(jobID string, fileData []byte, filename string) <span class="cov8" title="1">{
+        // Save uploaded file
+        uploadPath, err := app.csvProcessor.SaveUploadedFile(fileData, fmt.Sprintf("upload_%s_%s", jobID, filename))
+        if err != nil </span><span class="cov0" title="0">{
+                app.jobStore.UpdateJobStatus(jobID, JobStatusFailed, "", fmt.Sprintf("Failed to save uploaded file: %v", err))
+                return
+        }</span>
+
+        // Generate processed file path
+        <span class="cov8" title="1">processedPath := app.csvProcessor.GetProcessedFilePath(jobID)
+
+        // Process CSV file
+        err = app.csvProcessor.ProcessCSV(uploadPath, processedPath)
+        if err != nil </span><span class="cov8" title="1">{
+                app.jobStore.UpdateJobStatus(jobID, JobStatusFailed, "", fmt.Sprintf("Failed to process CSV: %v", err))
+                return
+        }</span>
+
+        // Update job status to completed
+        <span class="cov8" title="1">app.jobStore.UpdateJobStatus(jobID, JobStatusCompleted, processedPath, "")</span>
+}
+
+// serveFile serves a file as a blob
+func (app *App) serveFile(w http.ResponseWriter, filePath string) <span class="cov8" title="1">{
+        // Set appropriate headers
+        w.Header().Set("Content-Type", "application/octet-stream")
+        w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=%s", filepath.Base(filePath)))
+
+        // Open and serve file
+        file, err := os.Open(filePath)
+        if err != nil </span><span class="cov8" title="1">{
+                app.sendErrorResponse(w, http.StatusInternalServerError, "Failed to open processed file")
+                return
+        }</span>
+        <span class="cov8" title="1">defer file.Close()
+
+        // Copy file to response
+        _, err = io.Copy(w, file)
+        if err != nil </span><span class="cov0" title="0">{
+                app.sendErrorResponse(w, http.StatusInternalServerError, "Failed to serve file")
+                return
+        }</span>
+}
+
+// sendErrorResponse sends an error response
+func (app *App) sendErrorResponse(w http.ResponseWriter, statusCode int, message string) <span class="cov8" title="1">{
+        w.WriteHeader(statusCode)
+        response := ErrorResponse{Error: message}
+        json.NewEncoder(w).Encode(response)
+}</span>
+</pre>
+		
+		<pre class="file" id="file3" style="display: none">package main
+
+import (
+        "fmt"
+        "log"
+        "net/http"
+
+        "github.com/gorilla/mux"
+)
+
+func main() <span class="cov0" title="0">{
+        // Create application instance
+        app := NewApp()
+
+        // Create router
+        router := mux.NewRouter()
+
+        // API routes
+        api := router.PathPrefix("/API").Subrouter()
+        api.HandleFunc("/upload", app.UploadHandler).Methods("POST")
+        api.HandleFunc("/download/{id}", app.DownloadHandler).Methods("GET")
+
+        // Health check endpoint
+        router.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) </span><span class="cov0" title="0">{
+                w.WriteHeader(http.StatusOK)
+                fmt.Fprint(w, "OK")
+        }</span>).Methods("GET")
+
+        // Start server
+        <span class="cov0" title="0">port := "8080"
+        fmt.Printf("Server starting on port %s\n", port)
+        fmt.Println("Available endpoints:")
+        fmt.Println("  POST /API/upload - Upload CSV file")
+        fmt.Println("  GET  /API/download/{id} - Download processed file")
+        fmt.Println("  GET  /health - Health check")
+
+        log.Fatal(http.ListenAndServe(":"+port, router))</span>
+}
+</pre>
+		
+		<pre class="file" id="file4" style="display: none">package main
+
+import (
+        "sync"
+        "time"
+)
+
+// JobStatus represents the status of a file processing job
+type JobStatus string
+
+const (
+        JobStatusProcessing JobStatus = "processing"
+        JobStatusCompleted  JobStatus = "completed"
+        JobStatusFailed     JobStatus = "failed"
+)
+
+// ProcessingJob represents a file processing job
+type ProcessingJob struct {
+        ID        string    `json:"id"`
+        Status    JobStatus `json:"status"`
+        CreatedAt time.Time `json:"created_at"`
+        FilePath  string    `json:"file_path,omitempty"`
+        Error     string    `json:"error,omitempty"`
+}
+
+// UploadResponse represents the response for upload endpoint
+type UploadResponse struct {
+        ID string `json:"id"`
+}
+
+// ErrorResponse represents an error response
+type ErrorResponse struct {
+        Error string `json:"error"`
+}
+
+// JobStore manages in-memory storage of processing jobs
+type JobStore struct {
+        jobs map[string]*ProcessingJob
+        mu   sync.RWMutex
+}
+
+// NewJobStore creates a new job store
+func NewJobStore() *JobStore <span class="cov8" title="1">{
+        return &amp;JobStore{
+                jobs: make(map[string]*ProcessingJob),
+        }
+}</span>
+
+// CreateJob creates a new processing job
+func (js *JobStore) CreateJob(id string) *ProcessingJob <span class="cov8" title="1">{
+        js.mu.Lock()
+        defer js.mu.Unlock()
+
+        job := &amp;ProcessingJob{
+                ID:        id,
+                Status:    JobStatusProcessing,
+                CreatedAt: time.Now(),
+        }
+        js.jobs[id] = job
+        return job
+}</span>
+
+// GetJob retrieves a job by ID
+func (js *JobStore) GetJob(id string) (*ProcessingJob, bool) <span class="cov8" title="1">{
+        js.mu.RLock()
+        defer js.mu.RUnlock()
+
+        job, exists := js.jobs[id]
+        return job, exists
+}</span>
+
+// UpdateJobStatus updates the status of a job
+func (js *JobStore) UpdateJobStatus(id string, status JobStatus, filePath string, errorMsg string) <span class="cov8" title="1">{
+        js.mu.Lock()
+        defer js.mu.Unlock()
+
+        if job, exists := js.jobs[id]; exists </span><span class="cov8" title="1">{
+                job.Status = status
+                if filePath != "" </span><span class="cov8" title="1">{
+                        job.FilePath = filePath
+                }</span>
+                <span class="cov8" title="1">if errorMsg != "" </span><span class="cov8" title="1">{
+                        job.Error = errorMsg
+                }</span>
+        }
+}
+</pre>
+		
+		</div>
+	</body>
+	<script>
+	(function() {
+		var files = document.getElementById('files');
+		var visible;
+		files.addEventListener('change', onChange, false);
+		function select(part) {
+			if (visible)
+				visible.style.display = 'none';
+			visible = document.getElementById(part);
+			if (!visible)
+				return;
+			files.value = part;
+			visible.style.display = 'block';
+			location.hash = part;
+		}
+		function onChange() {
+			select(files.value);
+			window.scrollTo(0, 0);
+		}
+		if (location.hash != "") {
+			select(location.hash.substr(1));
+		}
+		if (!visible) {
+			select("file0");
+		}
+	})();
+	</script>
+</html>

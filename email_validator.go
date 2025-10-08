@@ -12,8 +12,8 @@ type EmailValidator struct {
 
 // NewEmailValidator creates a new email validator
 func NewEmailValidator() *EmailValidator {
-	// Simple email regex pattern
-	emailPattern := `^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$`
+	// More strict email regex pattern that allows + and % in local part
+	emailPattern := `^[a-zA-Z0-9]([a-zA-Z0-9._%+-]*[a-zA-Z0-9])?@[a-zA-Z0-9]([a-zA-Z0-9.-]*[a-zA-Z0-9])?\.[a-zA-Z]{2,}$`
 	emailRegex := regexp.MustCompile(emailPattern)
 
 	return &EmailValidator{
